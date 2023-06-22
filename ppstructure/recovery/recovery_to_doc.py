@@ -27,6 +27,36 @@ from ppstructure.recovery.table_process import HtmlToDocx
 from ppocr.utils.logging import get_logger
 logger = get_logger()
 
+import os
+import pandas as pd
+
+def convert_info_markdown(img, res, save_folder, img_name):
+    sorted_res = sorted_layout_boxes(res, img_width)  # Assuming `img_width` is available
+    
+    markdown_path = os.path.join(save_folder, '{}_ocr.md'.format(img_name))
+    with open(markdown_path, 'w') as f:
+        for i, region in enumerate(sorted_res):
+            if region['type'].lower() == 'figure':
+                excel_save_folder = os.path.join(save_folder, img_name)
+                img_path = os.path.join(excel_save_folder,
+                                        '{}_{}.jpg'.format(region['bbox'], img_idx))
+                f.write('![Figure]({})\n\n'.format(img_path))
+            elif region['type'].lower() == 'title':
+                f.write('# {}\n\n'.format(region['res'][0]['text']))
+            elif region['type'].lower() == 'table':
+                html_table = region['res']['html']
+                df = pd.read_html(html_table)[0]  # assuming there is only one table
+                markdown_table = df.to_markdown(index=False)
+                f.write('{}\n\n'.format(markdown_table))
+            else:
+                for i, line in enumerate(region['res']):
+                    f.write('{}\n'.format(line['text']))
+                f.write('\n')
+    print('Markdown saved to {}'.format(markdown_path))
+
+# Call the function with your data
+# convert_info_markdown(img, res, save_folder, img_name)
+
 
 def convert_info_docx(img, res, save_folder, img_name):
     doc = Document()
